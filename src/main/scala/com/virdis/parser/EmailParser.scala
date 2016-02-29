@@ -2,8 +2,12 @@ package com.virdis.parser
 
 import java.io.File
 
+import com.virdis.common.fileReader
+import com.virdis.models.EnronEmail
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
+
+import scala.util.control.NonFatal
 
 
 object EmailParser {
@@ -19,6 +23,8 @@ object EmailParser {
   val SUBJECT_MARKER = "Subject:"
   val EMAIL_FORWARD_MARKER = "FW:"
   val EMAIL_REPLY_MARKER = "RE:"
+  val MIME_VERSION_MARKER = "Mime-Version:"
+
 
   def listAllTxtFiles(path: String): List[File] = {
     val file = new File(path)
@@ -72,5 +78,62 @@ object EmailParser {
     }
   }
 
+  /*
+      We can find email recipients with following tags:
+      1. To:
+      2. Cc:
+      3. Bcc:
+      There is a chance that email ids can be repeated in the To, Cc and the Bcc section. To over come that
+      we can get the emails by each tag and then merge them into a Set effectively removing duplicate.
+   */
+  def mergeRecipients(to: Set[String], cc: Set[String], bcc: Set[String]) = to ++ cc ++ bcc
+
+  def buildEmail(emailContent: String): Option[EnronEmail] = {
+    var date: DateTime = null
+    var sender: String = ""
+    var to: Set[String] = Set.empty[String]
+    var sub: String = ""
+    var emailFlag: Boolean = false
+    var cc: Set[String] = Set.empty[String]
+    var bcc: Set[String] = Set.empty[String]
+    try {
+      date = parseDate(emailContent.substring(emailContent.indexOf(DATE_MARKER), emailContent.indexOf(FROM_MARKER)))
+      sender = senderEmail(emailContent.substring(emailContent.indexOf(FROM_MARKER), emailContent.indexOf(TO_MARKER)))
+      to = recipientEmailsByTags(emailContent.substring(emailContent.indexOf(TO_MARKER), emailContent.indexOf(SUBJECT_MARKER)),
+        TO_MARKER)
+      val indexOfCC = emailContent.indexOf(CC_MARKER)
+      // if Cc: tag is present use it to extract Subject
+     if (indexOfCC != -1) {
+        val subFlag = subject(emailContent.substring(emailContent.indexOf(SUBJECT_MARKER), indexOfCC))
+        cc = recipientEmailsByTags(emailContent.substring(indexOfCC, emailContent.indexOf(MIME_VERSION_MARKER)), CC_MARKER)
+        sub = subFlag._1
+        emailFlag = subFlag._2
+      } else {
+        val subFlag = subject(emailContent.substring(emailContent.indexOf(SUBJECT_MARKER), emailContent.indexOf(MIME_VERSION_MARKER)))
+        sub = subFlag._1
+        emailFlag = subFlag._2
+      }
+      // if Bcc: tag is present use it to extract recipients
+      val indexOfBcc = emailContent.indexOf(BCC_MARKER)
+      if (indexOfBcc != -1) {
+        bcc = recipientEmailsByTags(emailContent.substring(indexOfBcc, emailContent.indexOf(X_FROM_MARKER)), BCC_MARKER)
+      }
+
+      Option(EnronEmail(date, sender, mergeRecipients(to, cc, bcc), sub, emailFlag))
+
+    } catch {
+      case NonFatal(e) => {
+        /*
+            TODO: User Proper Logger
+         */
+        println("Exception -  Message "+e.getMessage)
+        println("Exception - Cause "+e.getCause)
+        println("Exception - Stacktrace ")
+        e.printStackTrace(System.out)
+        None
+      }
+    }
+
+  }
 
 }

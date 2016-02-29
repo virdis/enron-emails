@@ -44,6 +44,39 @@ class EmailParserSpec extends CommonSpecs {
         "Subject: FW: Concern",
         "Subject: Energy Issues"
       )
+
+      val sampleEmailOne =
+        """
+          |Message-ID: <22981892.1075860405119.JavaMail.evans@thyme>
+          |Date: Fri, 23 Mar 2001 02:03:00 -0800 (PST)
+          |From: miyung.buster@enron.com
+          |To: ann.schmidt@enron.com, bryan.seyfried@enron.com, dcasse@whwg.com,
+          |	dg27@pacbell.net, elizabeth.linnell@enron.com, filuntz@aol.com,
+          |	james.steffes@enron.com, janet.butler@enron.com,
+          |	jeannie.mandelker@enron.com, jeff.dasovich@enron.com,
+          |	joe.hartsoe@enron.com, john.neslage@enron.com,
+          |	john.sherriff@enron.com, joseph.alamo@enron.com,
+          |	karen.denne@enron.com, lysa.akin@enron.com,
+          |	margaret.carson@enron.com, mark.palmer@enron.com,
+          |	mark.schroeder@enron.com, markus.fiala@enron.com,
+          |	mary.hain@enron.com, michael.brown@enron.com, mike.dahlke@enron.com,
+          |	mona.petrochko@enron.com, nicholas.o'day@enron.com,
+          |	paul.kaufman@enron.com, peggy.mahoney@enron.com,
+          |	peter.styles@enron.com, richard.shapiro@enron.com,
+          |	rob.bradley@enron.com, sandra.mccubbin@enron.com,
+          |	shelley.corman@enron.com, stella.chan@enron.com,
+          |	steven.kean@enron.com, susan.mara@enron.com, mike.roan@enron.com,
+          |	alex.parsons@enron.com, andrew.morrison@enron.com, lipsen@cisco.com,
+          |	janel.guerrero@enron.com, shirley.hudler@enron.com,
+          |	kathleen.sullivan@enron.com, tom.briggs@enron.com,
+          |	linda.robertson@enron.com, lora.sullivan@enron.com,
+          |	jennifer.thome@enron.com
+          |Subject: Energy Issues
+          |Mime-Version: 1.0
+          |Content-Type: text/plain; charset=ANSI_X3.4-1968
+          |Content-Transfer-Encoding: quoted-printable
+          |X-From: Miyung Buster
+        """.stripMargin
     }
   }
 
@@ -100,5 +133,14 @@ class EmailParserSpec extends CommonSpecs {
       ("Concern".toLowerCase, false),
       ("Energy Issues".toLowerCase, true)
     )
+  }
+
+  "EmailParser" should "build EnronEmail" in {
+    val f = fixture
+    val enm = EmailParser.buildEmail(f.sampleEmailOne).get
+    enm.subject should be ("Energy Issues".toLowerCase())
+    enm.recipients.size should be (46)
+    enm.sender should be ("miyung.buster@enron.com")
+
   }
 }

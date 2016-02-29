@@ -1,6 +1,8 @@
 package com.virdis.streamingsource
 
+import com.virdis.common.fileReader
 import com.virdis.models.EnronEmail
+import com.virdis.parser.EmailParser
 import org.apache.flink.streaming.api.functions.source.SourceFunction
 import org.apache.flink.streaming.api.functions.source.SourceFunction.SourceContext
 
@@ -14,7 +16,41 @@ import org.apache.flink.streaming.api.functions.source.SourceFunction.SourceCont
 
  */
 class EnronEmailOrderedSource(dataPath: String) extends SourceFunction[EnronEmail] {
-  override def cancel(): Unit = ???
 
-  override def run(ctx: SourceContext[EnronEmail]): Unit = ???
+  @volatile
+  private var isRunning = true
+
+  override def cancel(): Unit = {
+    isRunning = false
+  }
+
+  override def run(ctx: SourceContext[EnronEmail]): Unit = {
+    /*
+      Get all files from subdirectories
+      We are interested only in the Email Content till the X-From line
+      once we read the email up to X-From Line we break from reading the file further
+    */
+    val files = EmailParser.listAllTxtFiles(dataPath)
+    files.foreach {
+      file =>
+        fileReader.using(scala.io.Source.fromFile(file)) {
+          src =>
+            val lines: Iterator[String] = src.getLines()
+            val emailContent = new StringBuilder()
+            var stopReading = true
+            while(isRunning && lines.hasNext && stopReading) {
+              val line = lines.next()
+              emailContent.append(line)
+              if (line.contains(EmailParser.X_FROM_MARKER)) stopReading = false
+            }
+            val email: Option[EnronEmail] = EmailParser.buildEmail(emailContent.toString())
+
+            /*
+                emit email
+             */
+            if (email.nonEmpty) ctx.collect(email.get)
+
+        }
+    }
+  }
 }

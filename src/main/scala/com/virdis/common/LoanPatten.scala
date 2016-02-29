@@ -20,3 +20,5 @@ trait LoanPatten {
     }
   }
 }
+
+object fileReader extends LoanPatten
