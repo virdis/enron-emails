@@ -10,7 +10,7 @@ import scala.util.control.NonFatal
 
 
 object EmailParser {
-  @transient
+
   val EMAIL_DATE_FORMATTER = DateTimeFormat.forPattern("EEE, d MMM y H:m:s Z (z)")
 
   val DATE_MARKER = "Date:"
