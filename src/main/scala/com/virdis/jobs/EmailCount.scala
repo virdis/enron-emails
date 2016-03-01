@@ -5,7 +5,6 @@ import com.virdis.streamingsource.EnronEmailSource
 import org.apache.flink.streaming.api.TimeCharacteristic
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
 import org.apache.flink.streaming.api.scala.DataStream
-import org.apache.flink.api.scala.createTypeInformation
 
 /**
   * This job calculates the number of emails each person received each day

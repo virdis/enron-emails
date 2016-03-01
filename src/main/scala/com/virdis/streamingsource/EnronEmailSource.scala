@@ -6,7 +6,7 @@ import com.virdis.parser.EmailParser
 import org.apache.flink.streaming.api.functions.source.SourceFunction
 import org.apache.flink.streaming.api.functions.source.SourceFunction.SourceContext
 
-/*
+/**
     EnronEmailOrderedSource generates a stream of Enron Emails.
     dataPath is used to provide the path to the directory which contains
     the subdirectories which contains the emails.
@@ -25,10 +25,12 @@ class EnronEmailSource(dataPath: String) extends SourceFunction[EnronEmail] {
   }
 
   override def run(ctx: SourceContext[EnronEmail]): Unit = {
-    /*
-      Get all files from subdirectories
-      We are interested only in the Email Content till the X-From line
-      once we read the email up to X-From Line we break from reading the file further
+
+  /**
+    * Get all files from subdirectories
+    * We are interested only in the Email Content till the X-From line
+    * once we read the email up to X-From Line we break from reading the file further
+    *
     */
     val files = EmailParser.listAllTxtFiles(dataPath)
     files.foreach {
@@ -41,14 +43,15 @@ class EnronEmailSource(dataPath: String) extends SourceFunction[EnronEmail] {
             while(isRunning && lines.hasNext && stopReading) {
               val line = lines.next()
               emailContent.append(line)
-              if (line.contains(EmailParser.X_FROM_MARKER)) stopReading = false
+              if (line.contains(EmailParser.X_FILENAME)) stopReading = false
             }
             val email: Option[EnronEmail] = EmailParser.buildEmail(emailContent.toString())
 
-            /*
-                emit email
+            /**
+                emit email to stream
              */
             if (email.nonEmpty) ctx.collect(email.get)
+            else println("Filename : "+file.getAbsolutePath)
 
         }
     }

@@ -42,7 +42,9 @@ class EmailParserSpec extends CommonSpecs {
         "Subject: RE: Confidential Concern",
         "Subject: Re: Thank You",
         "Subject: FW: Concern",
-        "Subject: Energy Issues"
+        "Subject: Energy Issues",
+        "Subject: Re:",
+        "Subject: FW:"
       )
 
       val sampleEmailOne =
@@ -131,7 +133,9 @@ class EmailParserSpec extends CommonSpecs {
       ("Confidential Concern".toLowerCase, false),
       ("Thank You".toLowerCase, false),
       ("Concern".toLowerCase, false),
-      ("Energy Issues".toLowerCase, true)
+      ("Energy Issues".toLowerCase, true),
+      ("", false),
+      ("", false)
     )
   }
 
