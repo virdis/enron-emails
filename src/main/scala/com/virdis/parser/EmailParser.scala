@@ -223,9 +223,7 @@ object EmailParser {
 
       if (!dataFlag) return None
 
-      val date = parseDate(emailContent.substring(emailContent.indexOf(DATE_MARKER),  fromTagIdx))
-      enronEmail.day = date.getDayOfYear
-      enronEmail.timeStamp = date.getMillis
+      enronEmail.createdAt = parseDate(emailContent.substring(emailContent.indexOf(DATE_MARKER),  fromTagIdx))
 
       enronEmail.sender = senderEmail(emailContent.substring(fromTagIdx , toTagIdx))
       to = recipientEmailsByTags(emailContent.substring(toTagIdx, emailContent.indexOf(SUBJECT_MARKER)),
