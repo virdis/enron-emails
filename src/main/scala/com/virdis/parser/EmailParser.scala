@@ -1,6 +1,7 @@
 package com.virdis.parser
 
 import java.io.File
+import java.util.Date
 
 import com.virdis.common.fileReader
 import com.virdis.models.EnronEmail
@@ -11,7 +12,7 @@ import scala.util.control.NonFatal
 
 
 object EmailParser {
-
+  @transient
   val EMAIL_DATE_FORMATTER = DateTimeFormat.forPattern("EEE, d MMM y H:m:s Z (z)")
 
   val DATE_MARKER = "Date:"
@@ -50,9 +51,9 @@ object EmailParser {
     }
   }
 
-  /*
-    check presence of "," . if present we know there are multiple emails
-    extract emails, trim and add them to a set
+  /**
+    *check presence of "," . if present we know there are multiple emails
+    *extract emails, trim and add them to a set
   */
   def recipientEmailsByTags(line: String, tag: String): Set[String] = {
     if (line.contains(tag)) {
@@ -64,11 +65,12 @@ object EmailParser {
   }
 
 
-  /*
-      We need to be case insensitive while looking for "RE" or" "FW" in the Subject line
+  /**
+      *We need to be case insensitive while looking for "RE" or" "FW" in the Subject line
    */
   def subject(line: String): (String,Boolean) = {
     val subject = line.split(SUBJECT_MARKER)(1)
+
     if (subject.toLowerCase.contains(EMAIL_FORWARD_MARKER.toLowerCase)) {
       (subject.toLowerCase.split(EMAIL_FORWARD_MARKER.toLowerCase)(1).trim, false)
     } else if (subject.toLowerCase.contains(EMAIL_REPLY_MARKER.toLowerCase)) {
@@ -78,53 +80,55 @@ object EmailParser {
     }
   }
 
-  /*
-      We can find email recipients with following tags:
-      1. To:
-      2. Cc:
-      3. Bcc:
-      There is a chance that email ids can be repeated in the To, Cc and the Bcc section. To over come that
-      we can get the emails by each tag and then merge them into a Set effectively removing duplicate.
+  /**
+      *We can find email recipients with following tags:
+      *1. To:
+      *2. Cc:
+      *3. Bcc:
+      *There is a chance that email ids can be repeated in the To, Cc and the Bcc section. To over come that
+      *we can get the emails by each tag and then merge them into a Set removing duplicate.
    */
   def mergeRecipients(to: Set[String], cc: Set[String], bcc: Set[String]) = to ++ cc ++ bcc
 
   def buildEmail(emailContent: String): Option[EnronEmail] = {
-    var date: DateTime = null
-    var sender: String = ""
+
     var to: Set[String] = Set.empty[String]
-    var sub: String = ""
-    var emailFlag: Boolean = false
     var cc: Set[String] = Set.empty[String]
     var bcc: Set[String] = Set.empty[String]
+    val enronEmail = new EnronEmail()
     try {
-      date = parseDate(emailContent.substring(emailContent.indexOf(DATE_MARKER), emailContent.indexOf(FROM_MARKER)))
-      sender = senderEmail(emailContent.substring(emailContent.indexOf(FROM_MARKER), emailContent.indexOf(TO_MARKER)))
-      to = recipientEmailsByTags(emailContent.substring(emailContent.indexOf(TO_MARKER), emailContent.indexOf(SUBJECT_MARKER)),
-        TO_MARKER)
-      val indexOfCC = emailContent.indexOf(CC_MARKER)
-      // if Cc: tag is present use it to extract Subject
-     if (indexOfCC != -1) {
-        val subFlag = subject(emailContent.substring(emailContent.indexOf(SUBJECT_MARKER), indexOfCC))
-        cc = recipientEmailsByTags(emailContent.substring(indexOfCC, emailContent.indexOf(MIME_VERSION_MARKER)), CC_MARKER)
-        sub = subFlag._1
-        emailFlag = subFlag._2
-      } else {
-        val subFlag = subject(emailContent.substring(emailContent.indexOf(SUBJECT_MARKER), emailContent.indexOf(MIME_VERSION_MARKER)))
-        sub = subFlag._1
-        emailFlag = subFlag._2
-      }
-      // if Bcc: tag is present use it to extract recipients
-      val indexOfBcc = emailContent.indexOf(BCC_MARKER)
-      if (indexOfBcc != -1) {
-        bcc = recipientEmailsByTags(emailContent.substring(indexOfBcc, emailContent.indexOf(X_FROM_MARKER)), BCC_MARKER)
-      }
 
-      Option(EnronEmail(date, sender, mergeRecipients(to, cc, bcc), sub, emailFlag))
+        val date  = parseDate(emailContent.substring(emailContent.indexOf(DATE_MARKER), emailContent.indexOf(FROM_MARKER)))
+        enronEmail.day = date.getDayOfYear
+        enronEmail.timeStamp = date.getMillis
+        enronEmail.sender = senderEmail(emailContent.substring(emailContent.indexOf(FROM_MARKER), emailContent.indexOf(TO_MARKER)))
+        to = recipientEmailsByTags(emailContent.substring(emailContent.indexOf(TO_MARKER), emailContent.indexOf(SUBJECT_MARKER)),
+          TO_MARKER)
+
+        val indexOfCC = emailContent.indexOf(CC_MARKER)
+        // if Cc: tag is present use it to extract Subject
+       if (indexOfCC != -1) {
+          val subFlag = subject(emailContent.substring(emailContent.indexOf(SUBJECT_MARKER), indexOfCC))
+          cc = recipientEmailsByTags(emailContent.substring(indexOfCC, emailContent.indexOf(MIME_VERSION_MARKER)), CC_MARKER)
+          enronEmail.subject    = subFlag._1
+          enronEmail.isOriginal = subFlag._2
+        } else {
+          val subFlag = subject(emailContent.substring(emailContent.indexOf(SUBJECT_MARKER), emailContent.indexOf(MIME_VERSION_MARKER)))
+          enronEmail.subject    = subFlag._1
+          enronEmail.isOriginal = subFlag._2
+        }
+        // if Bcc: tag is present use it to extract recipients
+        val indexOfBcc = emailContent.indexOf(BCC_MARKER)
+        if (indexOfBcc != -1) {
+          bcc = recipientEmailsByTags(emailContent.substring(indexOfBcc, emailContent.indexOf(X_FROM_MARKER)), BCC_MARKER)
+        }
+        enronEmail.recipients =  mergeRecipients(to, cc, bcc)
+        Option(enronEmail)
 
     } catch {
       case NonFatal(e) => {
-        /*
-            TODO: User Proper Logger
+        /**
+            *TODO: User Proper Logger
          */
         println("Exception -  Message "+e.getMessage)
         println("Exception - Cause "+e.getCause)

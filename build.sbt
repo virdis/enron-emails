@@ -18,11 +18,12 @@ val flinkDependencies = Seq(
 lazy val root = (project in file(".")).
   settings(
     libraryDependencies ++= flinkDependencies  ++ Seq(
-      "org.scalatest" % "scalatest_2.11" % "2.2.6" % "test"
+      "org.scalatest" % "scalatest_2.11" % "2.2.6" % "test",
+      "de.javakaffee" % "kryo-serializers" % "0.37"
     )
   )
 
-mainClass in assembly := Some("com.virdis.WordCount")
+mainClass in assembly := Some("com.virdis.jobs.EmailCount")
 
 assemblyJarName in assembly := "enron.jar"
 

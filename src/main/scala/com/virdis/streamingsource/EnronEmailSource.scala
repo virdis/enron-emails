@@ -15,7 +15,7 @@ import org.apache.flink.streaming.api.functions.source.SourceFunction.SourceCont
     the event.
 
  */
-class EnronEmailOrderedSource(dataPath: String) extends SourceFunction[EnronEmail] {
+class EnronEmailSource(dataPath: String) extends SourceFunction[EnronEmail] {
 
   @volatile
   private var isRunning = true

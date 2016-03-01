@@ -141,6 +141,5 @@ class EmailParserSpec extends CommonSpecs {
     enm.subject should be ("Energy Issues".toLowerCase())
     enm.recipients.size should be (46)
     enm.sender should be ("miyung.buster@enron.com")
-
   }
 }

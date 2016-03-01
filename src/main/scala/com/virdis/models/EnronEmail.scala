@@ -1,14 +1,18 @@
 package com.virdis.models
 
-import org.joda.time.DateTime
 import com.virdis.common.Constants._
-/**
-  * Created by sandeep on 2/28/16.
-  */
-case class EnronEmail(date: DateTime,
-                      sender: String,
-                      recipients: Set[String] = Set.empty[String],
-                      subject: String,
-                      isOriginal: Boolean) {
-  def label: String = if (recipients.size > 1) LABEL_BROADCAST else LABEL_DIRECT
+
+ class EnronEmail(
+                   var day: Int,
+                   var timeStamp : Long,
+                   var sender: String,
+                   var recipients: Set[String],
+                   var subject: String,
+                   var isOriginal: Boolean ) {
+
+   def this() {
+     this(0, 0L, "", Set.empty[String], "", false)
+   }
+
+   def label: String = if (recipients.size > 1) LABEL_BROADCAST else LABEL_DIRECT
 }
