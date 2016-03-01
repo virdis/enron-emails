@@ -11,9 +11,6 @@ class EmailParserSpec extends CommonSpecs {
       val dates = List(
         "Date: Wed, 11 Jul 2001 08:29:22 -0700 (PDT)",
         "Date: Tue, 26 Jun 2001 10:31:05 -0700 (PDT)",
-        "Date: Thu, 3 Aug 2000 12:11:00 -0700 (PDT)",
-        "Date: Thu, 26 Jul 2001 15:17:52 -0700 (PDT)",
-        "Date: Mon, 10 Apr 2000 05:00:00 -0700 (PDT)",
         "Date: Fri, 23 Mar 2001 02:03:00 -0800 (PST)",
         "Date: Fri, 11 Aug 2000 01:59:00 -0700 (PDT)"
       )
@@ -79,7 +76,30 @@ class EmailParserSpec extends CommonSpecs {
           |Content-Transfer-Encoding: quoted-printable
           |X-From: Miyung Buster
         """.stripMargin
+
+      val data1 =
+        """
+          |Message-ID: <19472575.1075846142367.JavaMail.evans@thyme>
+          |Date: Fri, 24 Oct 1997 07:00:00 -0700 (PDT)
+          |From: steven.kean@enron.com
+          |Subject:  Meet with Choice Team team Diane, Mark, Luke, Vicki, Harry, Jane,
+          | Klauberg, Rick, Jim, Robin Ross, Jay Flaherty, Dan Clearfield, Amy Leader
+          | in 6C2
+          |Mime-Version: 1.0
+          |Content-Type: text/plain; charset=us-ascii
+          |Content-Transfer-Encoding: 7bit
+          |X-From: Steven J Kean
+          |X-To:
+          |X-cc:
+          |X-bcc:
+          |X-Folder: \Steven_Kean_Dec2000_1\Notes Folders\All documents
+          |X-Origin: KEAN-S
+          |X-FileName: skean.nsf
+          |
+        """.stripMargin
     }
+
+
   }
 
   "EmailParser" should "list all .txt files in subdirectories" in {
@@ -127,7 +147,7 @@ class EmailParserSpec extends CommonSpecs {
     )
   }
 
-  "EmailParser" should "parse Subject" in {
+  "EmailParser" should "parse Subject and handle empty Subject Line" in {
     val f = fixture
     f.subjects.map(EmailParser.subject) should contain theSameElementsAs Vector(
       ("Confidential Concern".toLowerCase, false),
@@ -145,5 +165,11 @@ class EmailParserSpec extends CommonSpecs {
     enm.subject should be ("Energy Issues".toLowerCase())
     enm.recipients.size should be (46)
     enm.sender should be ("miyung.buster@enron.com")
+  }
+
+  "EmailParser" should "check if sender/recipient data exist" in {
+    val f = fixture
+    EmailParser.isSenderRecipientDataPresent(f.data1)._1 should be (false)
+    EmailParser.isSenderRecipientDataPresent(f.sampleEmailOne)._1 should be (true)
   }
 }
