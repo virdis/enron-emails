@@ -18,9 +18,8 @@ object Utils {
     def compare(x: DirectEmail, y: DirectEmail) = x.count compare y.count
   }
 
-  def initializeTree(x: DirectEmail): TreeSet[DirectEmail] = {
-   val tree = new TreeSet[DirectEmail]()(treeOrder)
-    tree + x
+  def initializeTree(): TreeSet[DirectEmail] = {
+    new TreeSet[DirectEmail]()(treeOrder)
   }
 
   def updateTree(x: DirectEmail, tree: TreeSet[DirectEmail]): TreeSet[DirectEmail] = {

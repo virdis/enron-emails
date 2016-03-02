@@ -232,7 +232,7 @@ object EmailParser {
       val idxCCTag = emailContent.indexOf(CC_MARKER)
 
       /**
-        * if Cc: tag is present use it to extract Subject
+        * if Cc: tag is present use it to extract recipients
         */
       if (idxCCTag != -1) {
         val subFlag = subject(emailContent.substring(emailContent.indexOf(SUBJECT_MARKER), idxCCTag))

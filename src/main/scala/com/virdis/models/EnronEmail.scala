@@ -54,3 +54,5 @@ class EnronEmail(
 }
 
 case class DirectEmail(mailId: String, count: Long)
+
+case class ResponseCalculator(sender: String, to: String, subject: String, timestamp: Long)
