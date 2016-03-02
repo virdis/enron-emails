@@ -1,6 +1,6 @@
 package com.virdis.models
 
-import com.virdis.common.Constants._
+import com.virdis.common.Utils._
 import org.joda.time.DateTime
 
 
@@ -52,3 +52,5 @@ class EnronEmail(
     sb.toString()
   }
 }
+
+case class DirectEmail(mailId: String, count: Long)

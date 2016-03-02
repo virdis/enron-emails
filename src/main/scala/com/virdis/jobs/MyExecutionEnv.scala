@@ -1,22 +1,30 @@
 package com.virdis.jobs
 
-import org.apache.flink.api.java.typeutils.runtime.kryo.Serializers
-import org.apache.flink.configuration.{ConfigConstants, Configuration}
-import org.apache.flink.streaming.api.environment.{StreamExecutionEnvironment, LocalStreamEnvironment}
+import de.javakaffee.kryoserializers.jodatime.JodaDateTimeSerializer
+import org.apache.flink.streaming.api.TimeCharacteristic
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
+import org.joda.time.DateTime
 
 /**
-  * Create a simple local streaming environment
- */
+  * Created by sandeep on 3/1/16.
+  */
 object MyExecutionEnv {
 
-  def env: StreamExecutionEnvironment = {
-    val config = new Configuration()
-    // start dash board
-    config.setBoolean(ConfigConstants.LOCAL_START_WEBSERVER, true)
-    // log file required
-    config.setString(ConfigConstants.JOB_MANAGER_WEB_LOG_PATH_KEY, "./data/logFile.txt")
+  def setup: StreamExecutionEnvironment = {
 
-    // local stream execution contex t
-    new LocalStreamEnvironment(config)
+    /**
+      * Setup the stream based on "ingestion time"
+      */
+
+    val env: StreamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment
+    env.setStreamTimeCharacteristic(TimeCharacteristic.IngestionTime)
+
+    /**
+      * Register JodaDateTime Serializer
+      */
+
+    env.getConfig().registerTypeWithKryoSerializer(classOf[DateTime], classOf[JodaDateTimeSerializer])
+
+    env
   }
 }

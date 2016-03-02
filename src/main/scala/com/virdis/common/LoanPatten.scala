@@ -2,7 +2,7 @@ package com.virdis.common
 
 import util.control.Exception._
 
-/*
+/**
     Pattern used for any resource that is suppose to be closed after usage so that
     there is no resource leakage.
  */
