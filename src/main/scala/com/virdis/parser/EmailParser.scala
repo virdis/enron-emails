@@ -102,22 +102,27 @@ object EmailParser {
     * There are emails with empty subject line we should account for that appropriately
     * and return a empty subject
     *
+    * Assumption : If an email has :
+    * 1. RE or Re in subject line - Its a reply
+    * 2. Fw or FW in subject line - Its an original
+    * 3. Else its and Original
+    *
     * @param line
     * @return
     */
   def subject(line: String): (String, Boolean) = {
     def extractSubject(str: String, marker: String) = {
       val res = str.toLowerCase().split(marker.toLowerCase())
-      if (res.size > 1) (res(1).trim, false)
-      else ("", false)
+      if (res.size > 1) res(1).trim
+      else ""
     }
 
     val subject = line.split(SUBJECT_MARKER)(1)
 
     if (subject.toLowerCase.contains(EMAIL_FORWARD_MARKER.toLowerCase)) {
-      extractSubject(subject, EMAIL_FORWARD_MARKER)
+      (extractSubject(subject, EMAIL_FORWARD_MARKER), true)
     } else if (subject.toLowerCase.contains(EMAIL_REPLY_MARKER.toLowerCase)) {
-      extractSubject(subject, EMAIL_REPLY_MARKER)
+      (extractSubject(subject, EMAIL_REPLY_MARKER), false)
     } else {
       (subject.trim.toLowerCase, true)
     }

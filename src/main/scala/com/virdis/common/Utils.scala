@@ -1,9 +1,10 @@
 package com.virdis.common
 
+import org.apache.flink.streaming.api.scala.DataStream
 import org.joda.time.format.DateTimeFormat
 
 import scala.collection.immutable.TreeSet
-import com.virdis.models.DirectEmail
+import com.virdis.models.{ResponseCalculator, EnronEmail, DirectEmail}
 /**
   * Created by sandeep on 2/28/16.
   */
@@ -42,4 +43,5 @@ object Utils {
   }
 
   def foldCount(s: (String, Long), r: DirectEmail) : (String, Long) = (r.mailId, s._2 + r.count)
+
 }

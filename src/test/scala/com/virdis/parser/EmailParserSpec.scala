@@ -152,10 +152,10 @@ class EmailParserSpec extends CommonSpecs {
     f.subjects.map(EmailParser.subject) should contain theSameElementsAs Vector(
       ("Confidential Concern".toLowerCase, false),
       ("Thank You".toLowerCase, false),
-      ("Concern".toLowerCase, false),
+      ("Concern".toLowerCase, true),
       ("Energy Issues".toLowerCase, true),
       ("", false),
-      ("", false)
+      ("", true)
     )
   }
 

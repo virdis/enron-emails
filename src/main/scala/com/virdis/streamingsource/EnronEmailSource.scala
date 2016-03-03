@@ -51,7 +51,11 @@ class EnronEmailSource(dataPath: String) extends SourceFunction[EnronEmail] {
                 emit email to stream
              */
             if (email.nonEmpty) ctx.collect(email.get)
-            else println("Filename : "+file.getAbsolutePath)
+
+          /**
+            * Un comment line to see all skipped and malformed files
+            **/
+          //else println("Filename : "+file.getAbsolutePath)
 
         }
     }

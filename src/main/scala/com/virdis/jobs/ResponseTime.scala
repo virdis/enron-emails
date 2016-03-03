@@ -6,7 +6,7 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
 import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.flink.streaming.api.scala._
 import com.virdis.common.Utils._
-import org.apache.flink.streaming.api.windowing.assigners.TumblingTimeWindows
+import org.apache.flink.streaming.api.windowing.assigners.{SlidingTimeWindows, TumblingTimeWindows}
 import org.apache.flink.streaming.api.windowing.time.Time
 import org.apache.flink.streaming.api.windowing.triggers.Trigger
 import org.apache.flink.util.Collector
@@ -35,24 +35,40 @@ object ResponseTime {
     val filterStream: DataStream[EnronEmail] = emails.filter( ! _.isSubjectEmpty )
 
     /**
+      * create stream of original emails
+      */
+    val originalEmails: DataStream[EnronEmail] = filterStream.filter(_.isOriginal)
+
+    /**
+      * create stream of reply emails
+      */
+    val replyEmails: DataStream[EnronEmail] = filterStream.filter( !_.isOriginal )
+
+
+
+    def flattenStream(ds: DataStream[EnronEmail]): DataStream[ResponseCalculator] = {
+      ds.flatMap(em => em.recipients.map(mailid => ResponseCalculator(em.sender, mailid, em.subject, em.createdAt.getMillis)))
+    }
+
+    /**
       *  Flatten Email Stream to get recipients
       */
 
-    val stream1: DataStream[ResponseCalculator] = filterStream
-      .flatMap(em => em.recipients.map(maildId => ResponseCalculator(em.sender, maildId, em.subject, em.createdAt.getMillis)))
+    val flattenOrgEmails: DataStream[ResponseCalculator] = flattenStream(originalEmails)
 
+    val flattenRepEmails: DataStream[ResponseCalculator] = flattenStream(replyEmails)
 
     /**
-      *  Self Join Stream where
-      *  recipient from first stream matches sender from second stream
-      *  sender from first stream matches recipient from second stream
-      *  and subject from first stream matches subject with second stream
+      *  Join Original Email Stream (oe) with Reply Email Stream (re)
       *
-      *  Bucket all data from joined stream in a 15 seconds buckey
+      *  Join condition: oe.sender == re.recipient && oe.recipient == re.sender && oe.subject == re.subject
+      *
+      *  Bucket all data from joined stream in a 15 seconds window
       */
-    val joinedStream = stream1.join(stream1)
-      .where(email1 =>   (email1.to, email1.sender, email1.subject))
-      .equalTo(email2 => (email2.sender, email2.to, email2.subject))
+
+    val joinedStream = flattenOrgEmails.join(flattenRepEmails)
+      .where(oe =>   (oe.sender, oe.to, oe.subject))
+      .equalTo(re => (re.to, re.sender, re.subject))
         .window(TumblingTimeWindows.of(Time.seconds(15)))
 
     /**
@@ -60,17 +76,21 @@ object ResponseTime {
       *  before emitting the elements
       */
     val applyJoin = joinedStream.apply {
-      (em1: ResponseCalculator, em2: ResponseCalculator, out: Collector[(ResponseCalculator,ResponseCalculator,Long)]) => {
-        val delta = scala.math.abs(em1.timestamp - em2.timestamp)
-        out.collect((em1, em2, delta))
+      (oe: ResponseCalculator, re: ResponseCalculator, out: Collector[(ResponseCalculator,Long)]) => {
+        val delta = scala.math.abs(re.timestamp - oe.timestamp)
+        out.collect((re, delta))
       }
     }
 
-    val minDelta = applyJoin.keyBy(_._3).minBy(2)
+    /**
+      * keyby the subject and find min by time delta
+     */
+
+    val minDelta = applyJoin.keyBy(re => (re._1.subject)).min(1)
 
     minDelta.addSink {
       res =>
-        println("Apply Join : Email 1 "+res._1 +" Email 2 "+res._2 +" Time Delta "+res._3)
+        println("==Response Email=="+res._1 +" ==Time Delta== "+res._2)
     }
 
     env.execute("Response Time")
