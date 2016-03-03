@@ -2,13 +2,15 @@ package com.virdis.jobs
 
 import com.virdis.models.{ResponseCalculator, EnronEmail}
 import com.virdis.streamingsource.EnronEmailSource
+import org.apache.flink.configuration.GlobalConfiguration
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
 import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.flink.streaming.api.scala._
-import com.virdis.common.Utils._
-import org.apache.flink.streaming.api.windowing.assigners.{SlidingTimeWindows, TumblingTimeWindows}
+import org.apache.flink.streaming.api.windowing.assigners.{SlidingTimeWindows, GlobalWindows, TumblingTimeWindows}
+import org.apache.flink.streaming.api.windowing.evictors.CountEvictor
 import org.apache.flink.streaming.api.windowing.time.Time
-import org.apache.flink.streaming.api.windowing.triggers.Trigger
+import org.apache.flink.streaming.api.windowing.triggers.{CountTrigger, PurgingTrigger}
+import org.apache.flink.streaming.api.windowing.windows.GlobalWindow
 import org.apache.flink.util.Collector
 
 /**
@@ -69,7 +71,7 @@ object ResponseTime {
     val joinedStream = flattenOrgEmails.join(flattenRepEmails)
       .where(oe =>   (oe.sender, oe.to, oe.subject))
       .equalTo(re => (re.to, re.sender, re.subject))
-        .window(TumblingTimeWindows.of(Time.seconds(15)))
+      .window(TumblingTimeWindows.of(Time.seconds(15)))
 
     /**
       *  An apply function describes the processing that needs to happen
@@ -90,7 +92,7 @@ object ResponseTime {
 
     minDelta.addSink {
       res =>
-        println("==Response Email=="+res._1 +" ==Time Delta== "+res._2)
+        println("==Response Email== "+res._1 +" ==Time Delta== "+res._2)
     }
 
     env.execute("Response Time")

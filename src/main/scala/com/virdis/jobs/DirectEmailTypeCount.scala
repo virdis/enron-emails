@@ -6,7 +6,7 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
 import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.flink.streaming.api.scala._
 import com.virdis.common.Utils._
-import org.apache.flink.streaming.api.windowing.assigners.TumblingTimeWindows
+import org.apache.flink.streaming.api.windowing.assigners.{GlobalWindows, TumblingTimeWindows}
 import org.apache.flink.streaming.api.windowing.time.Time
 import scala.collection.immutable.TreeSet
 
@@ -54,35 +54,12 @@ object DirectEmailTypeCount {
 
     // TODO : Figure out how to write a custom Sink to get the result in desired way
     /**
-      *  Max emails with State
-      *
-        *val topkDirectEmails: DataStream[(DirectEmail, TreeSet[DirectEmail])] = countDirectEmails.keyBy("mailId").mapWithState ((d: DirectEmail, topk: Option[TreeSet[DirectEmail]]) =>
-      *topk match {
-            *case Some(tree) => {
-              *val upTree = updateTree(d, tree)
-              *((d, upTree), Some(upTree))
-            *}
-            *case None => {
-      *val initTree = initializeTree()
-      *((d, initTree + d), Some(initTree))
-            *}
-      *}
-        *)
-        *topkDirectEmails.addSink {
-          *res =>
-            *println("Result : "+res)
-
-        *}
-
-    */
-
-    /**
       * max count
       */
 
-    countDirectEmails.keyBy("mailId").maxBy("count").addSink {
+    countDirectEmails.keyBy("mailId").max("count").addSink {
         res =>
-            println("Direct Emails Count : "+res)
+            println("==Direct Emails Count== : "+res)
     }
 
 

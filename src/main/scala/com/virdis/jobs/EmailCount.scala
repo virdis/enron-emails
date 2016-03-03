@@ -6,6 +6,7 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
 import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.flink.streaming.api.scala._
 import com.virdis.common.Utils._
+import org.apache.flink.streaming.api.windowing.assigners.GlobalWindows
 
 /**
   * This job calculates the number of emails a person received each day
@@ -28,7 +29,10 @@ object EmailCount {
       .flatMap { email => email.recipients.map(mailId => ((mailId, dateFormatter.print(email.createdAt)), 1L)) }
       .keyBy(0).sum(1)
 
-    counts.print()
+    counts.addSink {
+      res =>
+        println("== Count =="+res)
+    }
 
     env.execute("Email Count")
   }

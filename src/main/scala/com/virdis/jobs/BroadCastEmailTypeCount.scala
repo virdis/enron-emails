@@ -39,13 +39,13 @@ object BroadCastEmailTypeCount {
     val sumEmailsById = count.keyBy(_._1).sum(1)
 
     /**
-      * max by sender
+      * max count by sender
       */
-    val maxBySender = sumEmailsById.keyBy(_._1).maxBy(1)
+    val maxBySender = sumEmailsById.keyBy(_._1).max(1)
 
     maxBySender.addSink {
       res =>
-        println("BroadCast Email Count"+res)
+        println("==BroadCast Email Count== "+res)
     }
 
     env.execute("BroadCast Email Type Count")
