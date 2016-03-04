@@ -7,7 +7,7 @@ elif [[ -n "$JAVA_HOME" ]] && [[ -x "$JAVA_HOME/bin/java" ]];  then
   echo found java executable in JAVA_HOME     
   _java="$JAVA_HOME/bin/java"
 else
-  echo "no java"
+  echo "JAVA not found !!!!"
 fi
 
 flag=false

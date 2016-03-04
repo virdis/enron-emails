@@ -19,7 +19,6 @@ lazy val root = (project in file(".")).
   settings(
     libraryDependencies ++= flinkDependencies  ++ Seq(
       "org.scalatest" % "scalatest_2.11" % "2.2.6" % "test",
-      "org.apache.flink" % "flink-contrib-parent_2.11" % "0.10.2",
       "de.javakaffee" % "kryo-serializers" % "0.37"
     )
   )

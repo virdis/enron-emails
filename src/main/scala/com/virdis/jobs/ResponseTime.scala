@@ -2,15 +2,11 @@ package com.virdis.jobs
 
 import com.virdis.models.{ResponseCalculator, EnronEmail}
 import com.virdis.streamingsource.EnronEmailSource
-import org.apache.flink.configuration.GlobalConfiguration
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
 import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.flink.streaming.api.scala._
-import org.apache.flink.streaming.api.windowing.assigners.{SlidingTimeWindows, GlobalWindows, TumblingTimeWindows}
-import org.apache.flink.streaming.api.windowing.evictors.CountEvictor
+import org.apache.flink.streaming.api.windowing.assigners.{TumblingTimeWindows}
 import org.apache.flink.streaming.api.windowing.time.Time
-import org.apache.flink.streaming.api.windowing.triggers.{CountTrigger, PurgingTrigger}
-import org.apache.flink.streaming.api.windowing.windows.GlobalWindow
 import org.apache.flink.util.Collector
 
 /**
@@ -65,13 +61,13 @@ object ResponseTime {
       *
       *  Join condition: oe.sender == re.recipient && oe.recipient == re.sender && oe.subject == re.subject
       *
-      *  Bucket all data from joined stream in a 15 seconds window
+      *  Bucket all data from joined stream into a window
       */
 
     val joinedStream = flattenOrgEmails.join(flattenRepEmails)
       .where(oe =>   (oe.sender, oe.to, oe.subject))
       .equalTo(re => (re.to, re.sender, re.subject))
-      .window(TumblingTimeWindows.of(Time.seconds(15)))
+      .window(TumblingTimeWindows.of(Time.seconds(150)))
 
     /**
       *  An apply function describes the processing that needs to happen

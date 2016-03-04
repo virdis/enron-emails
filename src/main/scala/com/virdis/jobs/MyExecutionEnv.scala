@@ -27,4 +27,20 @@ object MyExecutionEnv {
 
     env
   }
+
+  def eventTimeSetup: StreamExecutionEnvironment = {
+    /**
+      * Setup the stream based on "event time"
+      */
+    val env: StreamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment
+    env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime)
+
+    /**
+      * Register JodaDateTime Serializer
+      */
+
+    env.getConfig().registerTypeWithKryoSerializer(classOf[DateTime], classOf[JodaDateTimeSerializer])
+
+    env
+  }
 }
